@@ -25,16 +25,24 @@ func New(store Store) *Service {
 }
 
 // CreateTask creates a new task.
+//
+// Through the unmarked helper reconcile, create_task reaches BOTH the marked
+// get_task op (suppressed below) and the marked update_task op (not suppressed).
 // a10n:blueprint Components.TaskService.Commands.create_task
+// a10n:blueprint:ignore-call Components.TaskService.Commands.get_task
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
-	t, err := s.store.GetTask(id) // check idempotency
-	if err == nil && t != nil {
-		return t.ID, nil
-	}
+	s.reconcile(id)
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
 	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
+}
+
+// reconcile is an UNMARKED helper. It calls two marked ops, so create_task
+// transitively reaches both get_task and update_task markers.
+func (s *Service) reconcile(id string) {
+	if t, err := s.GetTask(id); err == nil && t != nil {
+		_ = s.UpdateTask(id, t.Done)
+	}
 }
 
 // GetTask retrieves a task by ID.
