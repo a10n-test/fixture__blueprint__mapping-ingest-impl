@@ -27,6 +27,8 @@ func New(store Store) *Service {
 // CreateTask creates a new task.
 // a10n:blueprint Components.TaskService.Commands.create_task
 // a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
+// a10n:blueprint:call Dependencies.Github.Components.ApiService.Http.get_repo
+// a10n:blueprint:call Dependencies.Acme.Components.AcmeSdk.Operations.fetch
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
