@@ -26,7 +26,7 @@ func New(store Store) *Service {
 
 // CreateTask creates a new task.
 // a10n:blueprint Components.TaskService.Commands.create_task
-// a10n:blueprint:call Components.TaskService.Mcp.notify
+// a10n:blueprint:call Components.TaskService.Http.ping
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
