@@ -37,8 +37,12 @@ func (s *Service) CreateTask(title string) (string, error) {
 	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
 }
 
-// reconcile is an UNMARKED helper. It calls two marked ops, so create_task
-// transitively reaches both get_task and update_task markers.
+// reconcile is an UNMARKED helper that fans out to the two marked ops. The
+// indexer cannot trace same-receiver method calls, so the edges are declared
+// explicitly with a10n:index:call (the deterministic escape hatch for
+// AST-untraceable call edges).
+// a10n:index:call task.Service.GetTask
+// a10n:index:call task.Service.UpdateTask
 func (s *Service) reconcile(id string) {
 	if t, err := s.GetTask(id); err == nil && t != nil {
 		_ = s.UpdateTask(id, t.Done)
