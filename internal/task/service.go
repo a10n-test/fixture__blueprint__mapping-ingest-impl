@@ -17,20 +17,42 @@ type Store interface {
 }
 
 type Service struct {
-	store Store
+	store    Store
+	handlers map[string]func(string) error
 }
 
 func New(store Store) *Service {
-	return &Service{store: store}
+	s := &Service{store: store}
+	s.handlers = map[string]func(string) error{
+		"audit": s.audit,
+	}
+	return s
 }
 
-// CreateTask creates a new task.
+// CreateTask dispatches through a registry map to reach a marked helper.
+// The AST cannot trace handlers["audit"](id) to s.audit, so ingest cannot reach
+// the store :reads marker that s.audit carries — no @reads must be fabricated on
+// create_task. create_task only directly performs a store :writes.
 // a10n:blueprint Components.TaskService.Commands.create_task
 // a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
+	if h, ok := s.handlers["audit"]; ok {
+		_ = h(id)
+	}
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
 	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
+}
+
+// audit is reached ONLY via the registry map dispatch (handlers["audit"]). It
+// carries a store :reads marker. Because the dispatch is indirect, the AST walk
+// from create_task never reaches this marker, so create_task must NOT gain a
+// @reads edge from it. Mapping check (not ingest) is responsible for flagging a
+// spec @reads that has no traceable impl path.
+func (s *Service) audit(id string) error {
+	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
+	_, err := s.store.GetTask(id)
+	return err
 }
 
 // GetTask retrieves a task by ID.
