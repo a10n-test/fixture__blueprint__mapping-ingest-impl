@@ -46,6 +46,7 @@ func (s *Service) GetTask(id string) (*TaskRow, error) {
 
 // UpdateTask marks a task done or not.
 // a10n:blueprint Components.TaskService.Commands.update_task
+// a10n:blueprint Components.TaskService.Commands.deleted_op
 func (s *Service) UpdateTask(id string, done bool) error {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
 	return s.store.UpdateTask(id, done)
