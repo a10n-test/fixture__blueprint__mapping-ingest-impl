@@ -25,8 +25,8 @@ func New(store Store) *Service {
 }
 
 // CreateTask creates a new task.
-// a10n:blueprint Components.TaskService.create_task
-// a10n:blueprint:call Components.TaskService.get_task
+// a10n:blueprint Components.TaskService.Commands.create_task
+// a10n:blueprint:call Components.TaskService.Commands.get_task
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
@@ -39,14 +39,14 @@ func (s *Service) CreateTask(title string) (string, error) {
 }
 
 // GetTask retrieves a task by ID.
-// a10n:blueprint Components.TaskService.get_task
+// a10n:blueprint Components.TaskService.Commands.get_task
 func (s *Service) GetTask(id string) (*TaskRow, error) {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
 	return s.store.GetTask(id)
 }
 
 // UpdateTask marks a task done or not.
-// a10n:blueprint Components.TaskService.update_task
+// a10n:blueprint Components.TaskService.Commands.update_task
 func (s *Service) UpdateTask(id string, done bool) error {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
 	return s.store.UpdateTask(id, done)
