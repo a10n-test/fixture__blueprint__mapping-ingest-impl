@@ -30,6 +30,7 @@ func New(store Store) *Service {
 
 // CreateTask creates a new task.
 // a10n:blueprint Components.TaskService.Commands.create_task
+// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
 	_ = s.fetchOther(id)
@@ -38,8 +39,13 @@ func (s *Service) CreateTask(title string) (string, error) {
 }
 
 // fetchOther is an HTTP CLIENT wrapper: it makes an outbound network request to
-// another service. The marker names the boundary op it crosses to.
-// a10n:blueprint Components.OtherService.Http.fetch
+// another service. It carries NO blueprint marker — an outbound `http.Get` is a
+// network crossing, not an in-process call edge the AST can trace into the other
+// service's boundary op, so ingest has nothing to derive from it. A real call
+// into another component's boundary op would be declared with an explicit
+// `// a10n:blueprint:call Components.OtherService.Http.fetch`; absent that, ingest
+// must NOT fabricate a @calls edge. (Putting a plain ownership marker here instead
+// is the boundary_kind_on_call_site mistake that `mapping check` flags.)
 func (s *Service) fetchOther(id string) error {
 	resp, err := s.client.Get("http://other/" + id)
 	if err != nil {
@@ -50,6 +56,7 @@ func (s *Service) fetchOther(id string) error {
 
 // GetTask retrieves a task by ID.
 // a10n:blueprint Components.TaskService.Commands.get_task
+// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_retrievable
 func (s *Service) GetTask(id string) (*TaskRow, error) {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
 	return s.store.GetTask(id)
