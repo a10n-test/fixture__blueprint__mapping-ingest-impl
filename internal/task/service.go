@@ -1,6 +1,9 @@
 package task
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+)
 
 var ErrNotFound = errors.New("not found")
 
@@ -17,25 +20,36 @@ type Store interface {
 }
 
 type Service struct {
-	store Store
+	store  Store
+	client *http.Client
 }
 
 func New(store Store) *Service {
-	return &Service{store: store}
+	return &Service{store: store, client: http.DefaultClient}
 }
 
 // CreateTask creates a new task.
 // a10n:blueprint Components.TaskService.Commands.create_task
-// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
+	_ = s.fetchOther(id)
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
 	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
 }
 
+// fetchOther is an HTTP CLIENT wrapper: it makes an outbound network request to
+// another service. The marker names the boundary op it crosses to.
+// a10n:blueprint Components.OtherService.Http.fetch
+func (s *Service) fetchOther(id string) error {
+	resp, err := s.client.Get("http://other/" + id)
+	if err != nil {
+		return err
+	}
+	return resp.Body.Close()
+}
+
 // GetTask retrieves a task by ID.
 // a10n:blueprint Components.TaskService.Commands.get_task
-// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_retrievable
 func (s *Service) GetTask(id string) (*TaskRow, error) {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
 	return s.store.GetTask(id)
