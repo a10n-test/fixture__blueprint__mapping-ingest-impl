@@ -28,26 +28,26 @@ func New(store Store) *Service {
 // a10n:blueprint Components.TaskService.Commands.create_task
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
+	// a10n:blueprint Components.TaskRelationalStore.TaskRow
 	t, err := s.store.GetTask(id) // check idempotency
 	if err == nil && t != nil {
 		return t.ID, nil
 	}
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
+	// a10n:blueprint Components.TaskRelationalStore.TaskRow
 	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
 }
 
 // GetTask retrieves a task by ID.
 // a10n:blueprint Components.TaskService.Commands.get_task
 func (s *Service) GetTask(id string) (*TaskRow, error) {
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
+	// a10n:blueprint Components.TaskRelationalStore.TaskRow
 	return s.store.GetTask(id)
 }
 
 // UpdateTask marks a task done or not.
 // a10n:blueprint Components.TaskService.Commands.update_task
 func (s *Service) UpdateTask(id string, done bool) error {
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
+	// a10n:blueprint Components.TaskRelationalStore.TaskRow
 	return s.store.UpdateTask(id, done)
 }
 
