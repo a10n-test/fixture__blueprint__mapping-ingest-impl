@@ -10,46 +10,31 @@ type TaskRow struct {
 	Done  bool
 }
 
-type Store interface {
-	CreateTask(t TaskRow) error
-	GetTask(id string) (*TaskRow, error)
-	UpdateTask(id string, done bool) error
-}
-
-type Service struct {
-	store Store
-}
-
-func New(store Store) *Service {
-	return &Service{store: store}
-}
-
-// CreateTask creates a new task.
+// CreateTask is the marked entry point for Components.TaskService.Commands.create_task.
+//
+// It natively calls writeRow (a connected store write whose marker matches the
+// spec @writes(TaskRow) edge) and auditWrite (a symbol marked AuditRow, which
+// create_task does NOT declare -> an ORPHAN branch). It does NOT call any
+// get_task-marked symbol, so the spec's @calls(get_task) declaration is a BROKEN
+// link with no impl marker.
+//
 // a10n:blueprint Components.TaskService.Commands.create_task
-// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
-func (s *Service) CreateTask(title string) (string, error) {
+func CreateTask(title string) string {
 	id := generateID()
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
-	return id, s.store.CreateTask(TaskRow{ID: id, Title: title})
+	writeRow(TaskRow{ID: id, Title: title})
+	auditWrite(id)
+	return id
 }
 
-// GetTask retrieves a task by ID.
-// a10n:blueprint Components.TaskService.Commands.get_task
-// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_retrievable
-func (s *Service) GetTask(id string) (*TaskRow, error) {
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
-	return s.store.GetTask(id)
-}
+// writeRow is the connected store write — its marker matches the spec @writes edge.
+//
+// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
+func writeRow(t TaskRow) { _ = t }
 
-// UpdateTask marks a task done or not.
-// a10n:blueprint Components.TaskService.Commands.update_task
-func (s *Service) UpdateTask(id string, done bool) error {
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
-	if _, err := s.store.GetTask(id); err != nil {
-		return err
-	}
-	// a10n:blueprint Components.TaskRelationalStore.TaskRow:writes
-	return s.store.UpdateTask(id, done)
-}
+// auditWrite is marked AuditRow. CreateTask reaches it natively, but create_task's
+// spec declares no edge to AuditRow -> ORPHAN (impl_marker_not_in_spec).
+//
+// a10n:blueprint Components.TaskRelationalStore.AuditRow:writes
+func auditWrite(id string) { _ = id }
 
-func generateID() string { return "task-" + "001" }
+func generateID() string { return "task-001" }
