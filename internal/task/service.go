@@ -29,6 +29,7 @@ func New(store Store) *Service {
 // Through the unmarked helper reconcile, create_task reaches BOTH the marked
 // get_task op (suppressed below) and the marked update_task op (not suppressed).
 // a10n:blueprint Components.TaskService.Commands.create_task
+// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_persisted
 // a10n:blueprint:ignore-call Components.TaskService.Commands.get_task
 func (s *Service) CreateTask(title string) (string, error) {
 	id := generateID()
@@ -51,6 +52,7 @@ func (s *Service) reconcile(id string) {
 
 // GetTask retrieves a task by ID.
 // a10n:blueprint Components.TaskService.Commands.get_task
+// a10n:blueprint Products.TaskEngine.Features.TaskLifecycle.task_retrievable
 func (s *Service) GetTask(id string) (*TaskRow, error) {
 	// a10n:blueprint Components.TaskRelationalStore.TaskRow:reads
 	return s.store.GetTask(id)
